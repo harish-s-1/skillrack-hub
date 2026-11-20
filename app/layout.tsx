@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,7 +22,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <nav className="nav">
           <div className="nav-in">
-            <Link href="/" className="brand">SkillRack Hub</Link>
+            <Link href="/" className="brand">
+              <Logo size={26} />
+              <span>SkillRack Hub</span>
+            </Link>
             <Link href="/leaderboard" className="link">Leaderboard</Link>
             <Link href="/explain" className="link">Explain my code</Link>
           </div>
