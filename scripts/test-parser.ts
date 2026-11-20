@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { normaliseResumeUrl, parseResume, resumeId } from "../lib/skillrack";
-import { dailyGains, streaks } from "../lib/stats";
+import { POINT_WEIGHTS as W, dailyGains, scorePoints, streaks } from "../lib/stats";
 
 // --- URL safety: only skillrack.com resume links get through -------------
 assert.equal(
@@ -27,17 +27,54 @@ for (const bad of [
 }
 assert.equal(resumeId("https://www.skillrack.com/profile/123456/abcdef123456"), "123456");
 
-// --- Parser logic on a SYNTHETIC page (labels only, not a real SkillRack page)
-const fake = `<html><body><h1>Asha K</h1>
-  <p>Department: CSE</p><p>College: Test Engineering College</p>
-  <div>Code Tutor 120</div><div>Code Track 340</div>
-  <div>Daily Challenge 75</div><div>Daily Test 60</div><div>Code Test 30</div>
-  <div>Total Points 1,000</div><script>var Code Tutor 9999</script></body></html>`;
+// --- Parser on a SYNTHETIC page built from a real profile screenshot -------
+// Layout: the number comes first, its label underneath. The elements have no
+// whitespace between them on purpose, like a real page often does.
+const fake = `<html><body>
+  <nav>Dashboard Profile Resume</nav>
+  <div><h4>TEST STUDENT A</h4><p>SEC24CS111</p><span>CSE</span>
+  <p>Sairam Engineering College, Chennai (Pre-Final Year) 2028</p></div>
+  <section><h3>PROGRAMMING SUMMARY</h3>
+   <div><b>103227</b><small>RANK</small></div><div><b>0/10</b><small>LEVEL</small></div>
+   <div><b>60</b><small>BRONZE</small></div>
+   <div><b>280</b><small>PROGRAMS SOLVED</small></div>
+   <div><b>0</b><small>CODE TEST</small></div>
+   <div><b>279</b><small>CODE TRACK</small></div>
+   <div><b>0</b><small>DC</small></div>
+   <div><b>0</b><small>DT</small></div>
+   <div><b>1</b><small>CODE TUTOR</small></div>
+   <div><b>194</b><small>C</small></div><div><b>74</b><small>PYTHON3</small></div><div><b>12</b><small>JAVA</small></div>
+  </section><script>var x = "9999 CODE TEST";</script></body></html>`;
 const d = parseResume(fake);
-assert.equal(d.name, "Asha K");
-assert.deepEqual(d.categories, { codeTutor: 120, codeTrack: 340, dc: 75, dt: 60, codeTest: 30 });
-assert.equal(d.points, 1000);
+assert.deepEqual(d.categories, { codeTutor: 1, codeTrack: 279, dc: 0, dt: 0, codeTest: 0 });
+assert.equal(d.programsSolved, 280);
+assert.equal(d.points, 1 * W.codeTutor + 279 * W.codeTrack);
+assert.equal(d.name, "TEST STUDENT A");
+assert.equal(d.dept, "CSE");
+assert.equal(d.college, "Sairam Engineering College, Chennai");
+assert.equal(d.year, "Pre-Final Year 2028");
+assert.ok(!JSON.stringify(d).includes("SEC24CS111"), "roll number must not be kept");
+
+// Programs solved missing: fall back to the sum of the categories
+const noTotal = parseResume(`<body><b>5</b><small>CODE TRACK</small><b>3</b><small>DC</small></body>`);
+assert.equal(noTotal.programsSolved, 8);
+assert.equal(noTotal.points, 5 * W.codeTrack + 3 * W.dc);
+
+// DC and DT sit inside "Programs Solved", so they must not be counted twice
+const mixed = parseResume(
+  `<body><b>10</b><small>PROGRAMS SOLVED</small><b>3</b><small>CODE TRACK</small><b>2</b><small>CODE TUTOR</small>
+   <b>3</b><small>DC</small><b>2</b><small>DT</small></body>`,
+);
+assert.equal(mixed.programsSolved, 10);
+assert.equal(mixed.points, 2 * W.codeTutor + 3 * W.codeTrack + 3 * W.dc + 2 * W.dt);
+
 assert.throws(() => parseResume("<html><body>Please sign in</body></html>"));
+
+// A real profile checked against an independent points calculator:
+// 186 Code Tutor, 419 Code Track, 5 DC, 5 DT, 0 Code Test = 615 solved, 948 points
+assert.equal(scorePoints({ codeTutor: 186, codeTrack: 419, dc: 5, dt: 5, codeTest: 0 }), 948);
+// A solved total with no readable categories must fail loudly, not score 0
+assert.throws(() => parseResume(`<body><b>50</b><small>PROGRAMS SOLVED</small></body>`));
 
 // --- Streak maths --------------------------------------------------------
 const snaps = [
@@ -58,9 +95,7 @@ assert.deepEqual(streaks(g, "2026-11-17"), { current: 0, best: 3 }); // a missed
 const first = dailyGains([{ day: "2026-11-19", points: 1045, opening: 1000 }]);
 assert.deepEqual(first, { "2026-11-19": 45 });
 assert.deepEqual(streaks(first, "2026-11-19"), { current: 1, best: 1 });
-// No gain on day one means nothing to show yet
 assert.deepEqual(dailyGains([{ day: "2026-11-19", points: 1000, opening: 1000 }]), {});
-// Day two is measured against day one's total, not its opening
 assert.deepEqual(
   dailyGains([
     { day: "2026-11-19", points: 1045, opening: 1000 },

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Heatmap from "@/components/Heatmap";
 import RefreshButton from "@/components/RefreshButton";
 import { ensureSchema, sql } from "@/lib/db";
-import { dailyGains, streaks, todayIST } from "@/lib/stats";
+import { POINT_WEIGHTS, dailyGains, streaks, todayIST } from "@/lib/stats";
 
 export const dynamic = "force-dynamic";
 
@@ -45,9 +45,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
     })),
   );
   const { current, best } = streaks(gains, today);
-  const last7 = Object.entries(gains)
-    .filter(([k]) => k > new Date(Date.parse(today) - 7 * 864e5).toISOString().slice(0, 10))
-    .reduce((a, [, v]) => a + v, 0);
+  const programs = CATS.reduce((a, [, k]) => a + Number(latest?.[k] ?? 0), 0);
 
   const maxCat = Math.max(1, ...CATS.map(([, k]) => Number(latest?.[k] ?? 0)));
   const sub = [p.dept, p.college, p.year].filter(Boolean).join(" · ");
@@ -74,11 +72,15 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         <div className="stat"><dt>Total points</dt><dd>{Number(latest?.points ?? 0)}</dd></div>
         <div className="stat"><dt>Current streak</dt><dd>{current}<span className="muted small"> days</span></dd></div>
         <div className="stat"><dt>Best streak</dt><dd>{best}<span className="muted small"> days</span></dd></div>
-        <div className="stat"><dt>Points, last 7 days</dt><dd>{last7}</dd></div>
+        <div className="stat"><dt>Programs solved</dt><dd>{programs}</dd></div>
       </dl>
 
       <section className="panel">
-        <h2>Points by category</h2>
+        <h2>Solved by category</h2>
+        <p className="muted small">
+          Points per solve: Code Tutor {POINT_WEIGHTS.codeTutor}, Code Track {POINT_WEIGHTS.codeTrack}, Daily Challenge{" "}
+          {POINT_WEIGHTS.dc}, Daily Test {POINT_WEIGHTS.dt}, Code Test {POINT_WEIGHTS.codeTest}.
+        </p>
         <div className="cats">
           {CATS.map(([label, key]) => {
             const v = Number(latest?.[key] ?? 0);

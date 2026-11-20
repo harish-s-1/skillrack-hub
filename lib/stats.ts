@@ -5,6 +5,25 @@ export type Snap = {
   opening?: number;
 };
 
+/**
+ * Points earned for each solve in each SkillRack category. Change these numbers
+ * to change scoring everywhere. Checked against an independent points calculator:
+ * 186 Code Tutor, 419 Code Track, 5 DC, 5 DT, 0 Code Test = 948 points.
+ */
+export const POINT_WEIGHTS = { codeTutor: 0, codeTrack: 2, dc: 2, dt: 20, codeTest: 30 };
+
+export type Counts = { codeTutor: number; codeTrack: number; dc: number; dt: number; codeTest: number };
+
+export function scorePoints(c: Counts): number {
+  return (
+    c.codeTutor * POINT_WEIGHTS.codeTutor +
+    c.codeTrack * POINT_WEIGHTS.codeTrack +
+    c.dc * POINT_WEIGHTS.dc +
+    c.dt * POINT_WEIGHTS.dt +
+    c.codeTest * POINT_WEIGHTS.codeTest
+  );
+}
+
 const dayNum = (k: string) => {
   const [y, m, d] = k.split("-").map(Number);
   return Math.round(Date.UTC(y, m - 1, d) / 864e5);
