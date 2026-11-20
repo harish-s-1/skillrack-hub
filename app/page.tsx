@@ -1,4 +1,5 @@
 import AddProfileForm from "@/components/AddProfileForm";
+import SnakeHero from "@/components/SnakeHero";
 
 export default function Home() {
   return (
@@ -7,6 +8,8 @@ export default function Home() {
         <h1>See your SkillRack progress the way LeetCode shows yours.</h1>
         <p>Points by category, a daily streak, a heatmap, and your rank in your college. Paste your resume link once and it updates every day.</p>
       </section>
+
+      <SnakeHero />
 
       <AddProfileForm />
 
