@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import Heatmap from "@/components/Heatmap";
 import RefreshButton from "@/components/RefreshButton";
@@ -103,6 +104,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           </p>
         )}
       </section>
+
+      <p className="muted small">
+        Points look wrong or something broken? <Link href={`/feedback?kind=points&profile=${slug}`}>Tell us</Link>.
+      </p>
     </main>
   );
 }

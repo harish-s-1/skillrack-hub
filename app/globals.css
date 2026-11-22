@@ -111,3 +111,7 @@ td.rank { width: 48px; color: var(--muted); font-variant-numeric: tabular-nums; 
 .panel { background: var(--surface); background: color-mix(in srgb, var(--surface) 68%, transparent); }
 .snake-toggle { position: fixed; z-index: 5; right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); font: inherit; font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; cursor: pointer; }
 .snake-toggle:hover { color: var(--fg); }
+
+/* Feedback form */
+textarea.plain { font-family: var(--font-body); font-size: 15px; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }

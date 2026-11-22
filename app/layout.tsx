@@ -30,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <Link href="/leaderboard" className="link">Leaderboard</Link>
             <Link href="/explain" className="link">Explain my code</Link>
+            <Link href="/feedback" className="link">Feedback</Link>
           </div>
         </nav>
         {children}

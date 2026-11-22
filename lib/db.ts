@@ -41,6 +41,14 @@ export function ensureSchema(): Promise<void> {
       )`;
       await sql`alter table snapshots add column if not exists opening_points int`;
       await sql`create index if not exists snapshots_day on snapshots(day)`;
+      await sql`create table if not exists feedback (
+        id bigserial primary key,
+        kind text not null,
+        message text not null,
+        contact text,
+        profile_slug text,
+        created_at timestamptz not null default now()
+      )`;
       await sql`create table if not exists rate_limits (
         bucket text not null,
         window_start timestamptz not null,
